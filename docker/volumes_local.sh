@@ -45,11 +45,15 @@ db_backup_volume="${volume_prefix}_db-backup"
 
 echo "...creating volumes: ${data_volume}, ${db_conf_volume}, ${db_init_volume}, ${db_backup_volume}"
 
+# House docker volume logs for debugging
+DOCKER_VOLUME_LOGS="${project_root}/logs"
+mkdir -p "${DOCKER_VOLUME_LOGS}"
+
 # Create persistent volumes for Marquez
-docker volume create "${data_volume}" > /dev/null
-docker volume create "${db_conf_volume}" > /dev/null
-docker volume create "${db_init_volume}" > /dev/null
-docker volume create "${db_backup_volume}" > /dev/null
+docker volume create "${data_volume}" >> $DOCKER_VOLUME_LOGS/docker_volume_create.log 2>&1
+docker volume create "${db_conf_volume}" >> $DOCKER_VOLUME_LOGS/docker_volume_create.log 2>&1
+docker volume create "${db_init_volume}" >> $DOCKER_VOLUME_LOGS/docker_volume_create.log 2>&1
+docker volume create "${db_backup_volume}" >> $DOCKER_VOLUME_LOGS/docker_volume_create.log 2>&1
 
 # Provision persistent volumes for Marquez
 docker create --name volumes-provisioner \
@@ -60,6 +64,7 @@ docker create --name volumes-provisioner \
 
 # Add startup configuration for Marquez
 docker cp ./docker/wait-for-it.sh volumes-provisioner:/data/wait-for-it.sh
+docker cp ./marquez.yml volumes-provisioner:/data/marquez.yml
 echo "Added files to volume ${data_volume}: $(ls "${data_volume}")"
 
 # Add db configuration
